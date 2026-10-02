@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Course Prerequisite Planner</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    color: #1e293b;
+    padding: 25px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+header {
+    text-align: center;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 35px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 17px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+    color: #4f46e5;
+    margin-bottom: 18px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 8px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+
+button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+button:hover {
+    background: #3730a3;
+}
+
+.secondary {
+    background: #64748b;
+}
+
+.secondary:hover {
+    background: #475569;
+}
+
+.course-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 5px;
+}
+
+.prerequisite-row {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.arrow {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #4f46e5;
+}
+
+.result {
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 15px;
+    font-size: 17px;
+}
+
+.success {
+    background: #dcfce7;
+    border-left: 6px solid #16a34a;
+}
+
+.error {
+    background: #fee2e2;
+    border-left: 6px solid #dc2626;
+}
+
+.order {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.course-box {
+    background: #4f46e5;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.graph {
+    margin-top: 15px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.graph-item {
+    padding: 10px;
+    margin: 8px 0;
+    background: #eef2ff;
+    border-radius: 8px;
+}
+
+.info {
+    line-height: 1.7;
+}
+
+@media(max-width:700px) {
+    .course-row,
+    .prerequisite-row {
+        grid-template-columns: 1fr;
+    }
+
+    .arrow {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>🎓 Course Prerequisite Planner</h1>
+    <p>Find a valid order for completing university courses</p>
+</header>
+
+<!-- Problem Statement -->
+<div class="card">
+    <h2>📌 Problem Statement</h2>
+
+    <p class="info">
+        A university has several courses with prerequisite requirements.
+        Determine a valid order in which all courses can be completed while
+        satisfying all prerequisite requirements.
+        If the prerequisites contain a circular dependency,
+        report that no valid ordering exists.
+    </p>
+</div>
+
+<!-- Course Input -->
+<div class="card">
+    <h2>1️⃣ Enter Courses</h2>
+
+    <label>Number of Courses</label>
+
+    <input type="number" id="courseCount" min="1" placeholder="Example: 5">
+
+    <button onclick="createCourseFields()">
+        Create Course Fields
+    </button>
+
+    <div id="courseFields"></div>
+</div>
+
+<!-- Prerequisite Input -->
+<div class="card" id="prerequisiteCard" style="display:none;">
+
+    <h2>2️⃣ Enter Prerequisites</h2>
+
+    <p style="margin-bottom:15px;">
+        Select the prerequisite course first and the course that depends on it.
+    </p>
+
+    <label>Number of Prerequisite Relationships</label>
+
+    <input type="number"
+           id="prerequisiteCount"
+           min="0"
+           placeholder="Example: 4">
+
+    <button onclick="createPrerequisiteFields()">
+        Create Prerequisite Fields
+    </button>
+
+    <div id="prerequisiteFields"></div>
+</div>
+
+<!-- Calculate -->
+<div class="card" id="calculateCard" style="display:none;">
+
+    <h2>3️⃣ Find Valid Ordering</h2>
+
+    <button onclick="findValidOrder()">
+        🚀 Find Valid Ordering
+    </button>
+
+    <div id="result"></div>
+
+</div>
+
+<!-- Graph -->
+<div class="card" id="graphCard" style="display:none;">
+
+    <h2>🔗 Course Dependency Graph</h2>
+
+    <div id="graph" class="graph"></div>
+
+</div>
+
+<!-- Algorithm -->
+<div class="card">
+
+    <h2>⚙️ DAA Algorithm Used</h2>
+
+    <div class="info">
+
+        <h3>Topological Sort – Kahn's Algorithm</h3>
+
+        <br>
+
+        <p>
+            <b>Step 1:</b> Calculate the indegree of every course.
+        </p>
+
+        <p>
+            <b>Step 2:</b> Put all courses with indegree 0 into a queue.
+        </p>
+
+        <p>
+            <b>Step 3:</b> Remove a course from the queue and add it to the ordering.
+        </p>
+
+        <p>
+            <b>Step 4:</b> Reduce the indegree of its dependent courses.
+        </p>
+
+        <p>
+            <b>Step 5:</b> If a dependent course becomes indegree 0,
+            add it to the queue.
+        </p>
+
+        <p>
+            <b>Step 6:</b> Continue until the queue becomes empty.
+        </p>
+
+        <p>
+            <b>Step 7:</b> If all courses are processed, a valid ordering exists.
+            Otherwise, a circular dependency exists.
+        </p>
+
+    </div>
+</div>
+
+<!-- Complexity -->
+<div class="card">
+
+    <h2>📊 Complexity</h2>
+
+    <p class="info">
+        <b>Time Complexity:</b> O(V + E)
+        <br>
+        <b>Space Complexity:</b> O(V + E)
+        <br><br>
+        V = Number of courses
+        <br>
+        E = Number of prerequisite relationships
+    </p>
+
+</div>
+
+</div>
+
+<script>
+
+let courses = [];
+
+/* Create course name inputs */
+function createCourseFields() {
+
+    const count = parseInt(
+        document.getElementById("courseCount").value
+    );
+
+    const container =
+        document.getElementById("courseFields");
+
+    container.innerHTML = "";
+
+    if (!count || count < 1) {
+        alert("Please enter a valid number of courses.");
+        return;
+    }
+
+    for (let i = 0; i < count; i++) {
+
+        const input = document.createElement("input");
+
+        input.type = "text";
+        input.placeholder = "Course " + (i + 1) + " name";
+        input.id = "course" + i;
+
+        container.appendChild(input);
+    }
+
+    document.getElementById("prerequisiteCard")
+        .style.display = "block";
+}
+
+
+/* Create prerequisite dropdowns */
+function createPrerequisiteFields() {
+
+    const count = parseInt(
+        document.getElementById("prerequisiteCount").value
+    );
+
+    const container =
+        document.getElementById("prerequisiteFields");
+
+    container.innerHTML = "";
+
+    courses = [];
+
+    const courseCount =
+        parseInt(document.getElementById("courseCount").value);
+
+    for (let i = 0; i < courseCount; i++) {
+
+        const name =
+            document.getElementById("course" + i).value.trim();
+
+        if (name === "") {
+            alert("Please enter all course names.");
+            return;
+        }
+
+        courses.push(name);
+    }
+
+    if (isNaN(count) || count < 0) {
+        alert("Please enter a valid prerequisite count.");
+        return;
+    }
+
+    for (let i = 0; i < count; i++) {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "prerequisite-row";
+
+        const prerequisite =
+            document.createElement("select");
+
+        prerequisite.id = "pre" + i;
+
+        const dependent =
+            document.createElement("select");
+
+        dependent.id = "dep" + i;
+
+        courses.forEach(course => {
+
+            const option1 =
+                document.createElement("option");
+
+            option1.value = course;
+            option1.textContent = course;
+
+            prerequisite.appendChild(option1);
+
+            const option2 =
+                document.createElement("option");
+
+            option2.value = course;
+            option2.textContent = course;
+
+            dependent.appendChild(option2);
+
+        });
+
+        const arrow =
+            document.createElement("div");
+
+        arrow.className = "arrow";
+        arrow.innerHTML = "→";
+
+        row.appendChild(prerequisite);
+        row.appendChild(arrow);
+        row.appendChild(dependent);
+
+        container.appendChild(row);
+    }
+
+    document.getElementById("calculateCard")
+        .style.display = "block";
+}
+
+
+/* Kahn's Topological Sort */
+function findValidOrder() {
+
+    const n = courses.length;
+
+    const graph = {};
+
+    const indegree = {};
+
+    /* Initialize graph */
+    courses.forEach(course => {
+        graph[course] = [];
+        indegree[course] = 0;
+    });
+
+    const prerequisiteCount =
+        parseInt(
+            document.getElementById("prerequisiteCount").value
+        );
+
+    /* Read prerequisite relationships */
+    for (let i = 0; i < prerequisiteCount; i++) {
+
+        const prerequisite =
+            document.getElementById("pre" + i).value;
+
+        const dependent =
+            document.getElementById("dep" + i).value;
+
+        /* Same course cannot depend on itself */
+        if (prerequisite === dependent) {
+            showError(
+                "A course cannot be its own prerequisite."
+            );
+            return;
+        }
+
+        /* Avoid duplicate relationships */
+        if (!graph[prerequisite].includes(dependent)) {
+
+            graph[prerequisite].push(dependent);
+
+            indegree[dependent]++;
+        }
+    }
+
+    /* Queue for courses with indegree 0 */
+    const queue = [];
+
+    courses.forEach(course => {
+
+        if (indegree[course] === 0) {
+            queue.push(course);
+        }
+
+    });
+
+    const order = [];
+
+    /* Kahn's Algorithm */
+    while (queue.length > 0) {
+
+        const current = queue.shift();
+
+        order.push(current);
+
+        for (const next of graph[current]) {
+
+            indegree[next]--;
+
+            if (indegree[next] === 0) {
+                queue.push(next);
+            }
+
+        }
+    }
+
+    /* Check cycle */
+    if (order.length !== n) {
+
+        showError(
+            "No valid ordering exists! Circular dependency detected."
+        );
+
+        displayGraph(graph);
+
+        return;
+    }
+
+    /* Valid ordering */
+    showSuccess(order);
+
+    displayGraph(graph);
+}
+
+
+/* Success message */
+function showSuccess(order) {
+
+    const result =
+        document.getElementById("result");
+
+    result.className = "result success";
+
+    result.innerHTML = `
+        <h3>✅ Valid Ordering Exists</h3>
+
+        <p style="margin-top:10px;">
+            All courses can be completed while satisfying
+            their prerequisite requirements.
+        </p>
+
+        <div class="order">
+            ${order.map((course, index) => `
+                <div class="course-box">
+                    ${index + 1}. ${course}
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+
+/* Error message */
+function showError(message) {
+
+    const result =
+        document.getElementById("result");
+
+    result.className = "result error";
+
+    result.innerHTML = `
+        <h3>❌ No Valid Ordering Exists</h3>
+
+        <p style="margin-top:10px;">
+            ${message}
+        </p>
+
+        <p style="margin-top:10px;">
+            Please check the prerequisite relationships
+            for a circular dependency.
+        </p>
+    `;
+}
+
+
+/* Display dependency graph */
+function displayGraph(graph) {
+
+    const graphContainer =
+        document.getElementById("graph");
+
+    graphContainer.innerHTML = "";
+
+    for (const course of courses) {
+
+        const item =
+            document.createElement("div");
+
+        item.className = "graph-item";
+
+        if (graph[course].length === 0) {
+
+            item.innerHTML =
+                `<b>${course}</b> → No dependent courses`;
+
+        } else {
+
+            item.innerHTML =
+                `<b>${course}</b> → ${graph[course].join(", ")}`;
+
+        }
+
+        graphContainer.appendChild(item);
+    }
+
+    document.getElementById("graphCard")
+        .style.display = "block";
+}
+
+</script>
+
+</body>
+</html>
